@@ -18,6 +18,7 @@ def createParser():
 
 
 def putAP(cursor, table_name, bssid, essid, sec, key=None, wps=None, lat=None, lon=None):
+    '''Function add new AP record to local database'''
     security_types = {
         'None': 0,
         'WEP': 1,
@@ -73,6 +74,7 @@ def fetchAP(cursor, table_name, bssid, essid=None):
 
 
 def callApi(method, request):
+    '''Function calls 3WiFi API method and handling errors'''
     url = 'https://3wifi.stascorp.com/api/{}'.format(method)
     r = requests.post(url, json=request).json()
     if r['result']:
@@ -126,7 +128,10 @@ def apiquery():
             n = 100  # Мaximum count of BSSID in a single request
             for i in range(0, len(missing), n):
                 sub_missing = missing[i:i+n]
-                s = callApi('apiquery', {'key': r['key'], 'bssid': sub_missing})
+                try:
+                    s = callApi('apiquery', {'key': r['key'], 'bssid': sub_missing})
+                except requests.exceptions.RequestException:
+                    continue
                 if s['result'] and s['data']:
                     server_data = s['data']
                     data.update(server_data)
@@ -162,9 +167,13 @@ def apiwps():
         if not namespace.offline:
             # Requesting WPS pin's from 3WiFi
             api_key = request.query.key
-            s = callApi('apiwps', {'key': api_key, 'bssid': bssid})
-            if s['result'] and s['data']:
-                data[bssid]['scores'].extend(s['data'][bssid]['scores'])
+            try:
+                s = callApi('apiwps', {'key': api_key, 'bssid': bssid})
+            except requests.exceptions.RequestException:
+                pass
+            else:
+                if s['result'] and s['data']:
+                    data[bssid]['scores'].extend(s['data'][bssid]['scores'])
 
         resp = {'result': True, 'data': data}
 
