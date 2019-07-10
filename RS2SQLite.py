@@ -45,7 +45,7 @@ with open(filename, 'r') as file:
         bssid = line[8]
         essid = line[9] if line[9] else None
         security = security_types[line[10]]
-        key = line[11] if (security and key and not key.startswith('<not accessible>')) else None
+        key = line[11] if (security and line[11] and not line[11].startswith('<not accessible>')) else None
         wps = line[12] if line[12] else None
         latitude = line[19] if (line[19] and line[19] != 'N/A') else None
         longitude = line[20] if (line[20] and line[20] != 'N/A') else None
