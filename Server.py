@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 import argparse
 import sqlite3
@@ -8,16 +9,50 @@ from time import gmtime, strftime, sleep
 
 
 def createParser():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-d', '--database', default='APs.db', type=str, help='path to SQLite database file. Default: APs.db')
-    parser.add_argument('-t', '--table', default='aps', type=str, help='database table name. Default "aps"')
-    parser.add_argument('-f', '--offline', action='store_const', const=True, help='work offline: fetch data only from local database')
-    parser.add_argument('--host', default='127.0.0.1', type=str, help='HTTP server IP. Default: 127.0.0.1')
-    parser.add_argument('-p', '--port', default=8080, type=int, help='HTTP server port. Default: 8080')
+    parser = argparse.ArgumentParser(
+        description='Caching proxy server for 3WiFi Locator.',
+        epilog='''The author is not responsible for your
+actions with this program.'''
+        )
+    parser.add_argument(
+        '-d',
+        '--database',
+        type=str, default='APs.db',
+        help='path to SQLite database file. Default: APs.db'
+        )
+    parser.add_argument(
+        '-t',
+        '--table',
+        type=str,
+        default='aps',
+        help='database table name. Default "aps"'
+        )
+    parser.add_argument(
+        '-f',
+        '--offline',
+        action='store_const',
+        const=True,
+        help='work offline: fetch data only from local database'
+        )
+    parser.add_argument(
+        '--host',
+        default='127.0.0.1',
+        type=str,
+        help='HTTP server IP. Default: 127.0.0.1'
+        )
+    parser.add_argument(
+        '-p',
+        '--port',
+        type=int,
+        default=8080,
+        help='HTTP server port. Default: 8080'
+        )
+
     return parser
 
 
-def putAP(cursor, table_name, bssid, essid, sec, key=None, wps=None, lat=None, lon=None):
+def putAP(cursor, table_name, bssid, essid, sec,
+          key=None, wps=None, lat=None, lon=None):
     '''Function add new AP record to local database'''
     security_types = {
         'None': 0,
@@ -30,11 +65,15 @@ def putAP(cursor, table_name, bssid, essid, sec, key=None, wps=None, lat=None, l
     bssid = bssid.upper() if bssid else None
     essid = essid if essid else None
     security = security_types[sec]
-    key = key if (key and not key.startswith(('<empty>', '<not accessible>'))) else None
+    if key and not key.startswith(('<empty>', '<not accessible>')):
+        pass
+    else:
+        key = None
     wps = wps if wps else None
     lat = lat if lat else None
     lon = lon if lon else None
-    query = 'INSERT INTO {} (bssid, essid, security, key, wps, lat, lon) VALUES (?, ?, ?, ?, ?, ?, ?)'.format(table_name)
+    query = 'INSERT INTO {} (bssid, essid, security, key, wps, lat, lon) \
+             VALUES (?, ?, ?, ?, ?, ?, ?)'.format(table_name)
     cursor.execute(query, (bssid, essid, security, key, wps, lat, lon))
 
 
@@ -49,7 +88,9 @@ def fetchAP(cursor, table_name, bssid, essid=None):
         5: 'WPA Enterprise'
     }
     bssid = bssid.upper()
-    query = 'SELECT bssid, essid, security, key, wps, lat, lon FROM {} WHERE bssid = ?'.format(table_name)
+    query = 'SELECT bssid, essid, security, key, wps, lat, lon \
+             FROM {} \
+             WHERE bssid = ?'.format(table_name)
     if essid:
         query += ' AND essid = ?'
         cursor.execute(query, (bssid, essid))
@@ -129,7 +170,13 @@ def apiquery():
             for i in range(0, len(missing), n):
                 sub_missing = missing[i:i+n]
                 try:
-                    s = callApi('apiquery', {'key': r['key'], 'bssid': sub_missing})
+                    s = callApi(
+                        'apiquery',
+                        {
+                            'key': r['key'],
+                            'bssid': sub_missing
+                        }
+                        )
                 except requests.exceptions.RequestException:
                     continue
                 if s['result'] and s['data']:
@@ -137,7 +184,9 @@ def apiquery():
                     data.update(server_data)
                     for bssid, values in server_data.items():
                         for entry in values:
-                            putAP(cursor, table_name, entry['bssid'], entry['essid'], entry['sec'], entry['key'], entry['wps'], entry['lat'], entry['lon'])
+                            putAP(cursor, table_name, entry['bssid'],
+                                  entry['essid'], entry['sec'], entry['key'],
+                                  entry['wps'], entry['lat'], entry['lon'])
             conn.commit()
 
         resp = {'result': True, 'data': data}
@@ -151,7 +200,9 @@ def apiwps():
     if bssid:
         data = {}
         data[bssid] = {'scores': []}
-        query = 'SELECT wps FROM {} WHERE bssid = ?'.format(table_name)
+        query = 'SELECT wps \
+                 FROM {} \
+                 WHERE bssid = ?'.format(table_name)
         cursor.execute(query, (bssid,))
         r = cursor.fetchone()
         if r[0]:
