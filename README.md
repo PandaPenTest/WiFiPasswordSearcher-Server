@@ -19,7 +19,7 @@ python Server.py
 #### Дополнительно: создание псевдонима команды
 ```
 cd ~
-echo alias lserver='"cd LocatorServer/ $$ python Server.py"' >> .bashrc
+echo alias lserver='"cd LocatorServer/ && python Server.py"' >> .bashrc
 ```
 После перезапуска Termux:
 ```
