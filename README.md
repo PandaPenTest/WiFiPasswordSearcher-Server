@@ -14,6 +14,16 @@ pkg install python git
 git clone https://github.com/drygdryg/WiFiPasswordSearcher-Server.git LocatorServer
 cd LocatorServer/
 pip install -r requirements.txt
+python Server.py
+```
+#### Дополнительно: создание псевдонима команды
+```
+cd ~
+echo alias lserver='"cd LocatorServer/ $$ python Server.py"' >> .bashrc
+```
+После перезапуска Termux:
+```
+lserver
 ```
 ### Настройка 3WiFi Locator
 - Зайдите в настройки (иконка гаечного ключа в правом верхнем углу)
