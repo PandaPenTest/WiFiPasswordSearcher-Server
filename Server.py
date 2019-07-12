@@ -204,16 +204,17 @@ def apiwps():
                  FROM {} \
                  WHERE bssid = ?'.format(table_name)
         cursor.execute(query, (bssid,))
-        r = cursor.fetchone()
-        if r[0]:
-            wps_pin = r[0]
-            score = {
-                'name': 'Local cached',
-                'value': wps_pin,
-                'score': 1,
-                'fromdb': True
-            }
-            data[bssid]['scores'].append(score)
+        r = cursor.fetchall()
+        for s in r:
+            if s:
+                wps_pin = s[0]
+                score = {
+                    'name': 'Local cached',
+                    'value': wps_pin,
+                    'score': 1,
+                    'fromdb': True
+                }
+                data[bssid]['scores'].append(score)
 
         if not namespace.offline:
             # Requesting WPS pin's from 3WiFi
