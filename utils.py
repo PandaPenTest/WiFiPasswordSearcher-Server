@@ -42,4 +42,4 @@ def str2pin(pin):
     return (None if pin == '' else int(pin))
 
 def pin2str(pin):
-    return ('' if pin == None else pin.zfill(8))
+    return ('' if pin == None else str(pin).zfill(8))
