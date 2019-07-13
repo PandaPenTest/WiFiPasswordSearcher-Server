@@ -190,7 +190,7 @@ def apiwps():
                 wps_pin = s[0]
                 score = {
                     'name': 'Local cached',
-                    'value': wps_pin,
+                    'value': pin2str(wps_pin),
                     'score': 1,
                     'fromdb': True
                 }
