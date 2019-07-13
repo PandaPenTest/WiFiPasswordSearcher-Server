@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import csv
+from utils import mac2dec, str2sec, str2pin
 import sqlite3
 
 
@@ -36,42 +37,31 @@ table_name = 'aps'
 create_structure = """
 CREATE TABLE IF NOT EXISTS {} (
     id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    bssid TEXT NOT NULL,
+    bssid INTEGER NOT NULL,
     essid TEXT,
-    security INTEGER,
+    sec INTEGER NOT NULL,
     key TEXT,
-    wps INTEGER,
-    lat REAL,
-    lon REAL
+    wps INTEGER
 )
 """.format(table_name)
 cursor.execute(create_structure)
 conn.commit()
 
-security_types = {
-    'None': 0,
-    'WEP': 1,
-    'WPA': 2,
-    'WPA2': 3,
-    'WPA/WPA2': 4,
-    'WPA Enterprise': 5
-}
+
 
 reader = csv.reader(namespace.input, delimiter=';')
 next(reader)  # Skip header
 for line in reader:
-    bssid = line[8]
+    bssid = mac2dec(line[8])
     essid = line[9]
-    security = security_types[line[10]] if line[10] else None
-    key = line[11] if security else None
-    wps = line[12] if line[12] else None
-    latitude = line[19] if (line[19] and line[19] != 'N/A') else None
-    longitude = line[20] if (line[20] and line[20] != 'N/A') else None
-    if bssid and essid:
-        query = 'INSERT INTO {} (bssid,essid,security,key,wps,lat,lon) \
-                 VALUES (?,?,?,?,?,?,?)'.format(table_name)
+    sec = str2sec(line[10])
+    key = line[11] if sec else None
+    wps = str2pin(line[12])
+    if bssid and essid and sec:
+        query = 'INSERT INTO {} (bssid,essid,sec,key,wps) \
+                 VALUES (?,?,?,?,?)'.format(table_name)
         cursor.execute(query, (
-            bssid, essid, security,
-            key, wps, latitude, longitude))
+            bssid, essid, sec,
+            key, wps))
 conn.commit()
 conn.close()

@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import argparse
 import sqlite3
+from utils import *
 from bottle import Bottle, run, request
 import requests
 import json
@@ -52,43 +53,24 @@ actions with this program.'''
 
 
 def putAP(cursor, table_name, bssid, essid, sec,
-          key=None, wps=None, lat=None, lon=None):
+          key=None, wps=None):
     '''Function add new AP record to local database'''
-    security_types = {
-        'None': 0,
-        'WEP': 1,
-        'WPA': 2,
-        'WPA2': 3,
-        'WPA/WPA2': 4,
-        'WPA Enterprise': 5
-    }
-    bssid = bssid.upper() if bssid else None
-    essid = essid if essid else None
-    security = security_types[sec]
+    bssid = mac2dec(bssid)
+    sec = str2sec(sec)
     if key and not key.startswith(('<empty>', '<not accessible>')):
         pass
     else:
         key = None
-    wps = wps if wps else None
-    lat = lat if lat else None
-    lon = lon if lon else None
-    query = 'INSERT INTO {} (bssid, essid, security, key, wps, lat, lon) \
-             VALUES (?, ?, ?, ?, ?, ?, ?)'.format(table_name)
-    cursor.execute(query, (bssid, essid, security, key, wps, lat, lon))
+    wps = str2pin(wps)
+    query = 'INSERT INTO {} (bssid, essid, sec, key, wps) \
+             VALUES (?, ?, ?, ?, ?)'.format(table_name)
+    cursor.execute(query, (bssid, essid, sec, key, wps))
 
 
 def fetchAP(cursor, table_name, bssid, essid=None):
     '''Function returns AP records from local database'''
-    inv_security_types = {
-        0: 'None',
-        1: 'WEP',
-        2: 'WPA',
-        3: 'WPA2',
-        4: 'WPA/WPA2',
-        5: 'WPA Enterprise'
-    }
-    bssid = bssid.upper()
-    query = 'SELECT bssid, essid, security, key, wps, lat, lon \
+    bssid = mac2dec(bssid)
+    query = 'SELECT bssid, essid, sec, key, wps \
              FROM {} \
              WHERE bssid = ?'.format(table_name)
     if essid:
@@ -101,13 +83,11 @@ def fetchAP(cursor, table_name, bssid, essid=None):
     for k in r:
         entry = {
             'time': strftime("%Y-%m-%d %H:%M:%S", gmtime()),
-            'bssid': k[0],
-            'essid': k[1] if k[1] else '',
-            'sec': inv_security_types[k[2]],
-            'key': k[3] if k[2] else '',
-            'wps': k[4] if k[4] else '',
-            'lat': k[5] if k[5] else '',
-            'lon': k[6] if k[6] else ''
+            'bssid': dec2mac(k[0]),
+            'essid': k[1],
+            'sec': sec2str(k[2]),
+            'key': k[3] if k[2] else '<empty>',
+            'wps': pin2str(k[4])
         }
         entries.append(entry)
 
@@ -186,7 +166,7 @@ def apiquery():
                         for entry in values:
                             putAP(cursor, table_name, entry['bssid'],
                                   entry['essid'], entry['sec'], entry['key'],
-                                  entry['wps'], entry['lat'], entry['lon'])
+                                  entry['wps'])
             conn.commit()
 
         resp = {'result': True, 'data': data}
@@ -245,13 +225,11 @@ if __name__ == '__main__':
     create_structure = """
     CREATE TABLE IF NOT EXISTS {} (
         id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        bssid TEXT NOT NULL,
+        bssid INTEGER NOT NULL,
         essid TEXT,
-        security INTEGER,
+        sec INTEGER NOT NULL,
         key TEXT,
-        wps INTEGER,
-        lat REAL,
-        lon REAL
+        wps INTEGER
     )
     """.format(table_name)
 
