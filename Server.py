@@ -178,12 +178,13 @@ def apiquery():
 def apiwps():
     bssid = request.query.bssid.upper()
     if bssid:
+        dec_bssid = mac2dec(bssid)
         data = {}
         data[bssid] = {'scores': []}
         query = 'SELECT wps \
                  FROM {} \
                  WHERE bssid = ?'.format(table_name)
-        cursor.execute(query, (bssid,))
+        cursor.execute(query, (dec_bssid,))
         r = cursor.fetchall()
         for s in r:
             if s:
