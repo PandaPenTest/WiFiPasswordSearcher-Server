@@ -7,9 +7,9 @@ import sqlite3
 
 
 parser = argparse.ArgumentParser(
-    description = '''This script converts Scan Router CSV tables to SQLite DB
+    description='''This script converts Scan Router CSV tables to SQLite DB
 file for 3WiFi Locator caching server.''',
-    epilog = '''The author is not responsible for your 
+    epilog='''The author is not responsible for your
 actions with this script.'''
     )
 parser.add_argument(
@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS {} (
 """.format(table_name)
 cursor.execute(create_structure)
 conn.commit()
-
 
 
 reader = csv.reader(namespace.input, delimiter=';')
