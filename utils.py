@@ -29,7 +29,7 @@ def str2sec(sec):
         'WPA/WPA2': 4,
         'WPA Enterprise': 5
     }
-    return (security_types[sec] if sec in security_types else None)
+    return (security_types[sec] if sec in security_types else 0)
 
 
 def sec2str(sec):
